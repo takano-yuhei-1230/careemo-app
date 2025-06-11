@@ -17,17 +17,30 @@
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  color: #000;
+  background: #fff;
+  min-height: 100vh;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+.cm-focused {
+  outline: none !important;
+  border-color: #ccc;
+  box-shadow: 0 0 0 1px #ccc;
+}
+
+.cm-foldGutter span {
+  line-height: 1;
+  vertical-align: top;
+  padding: 0 2px !important;
+  color: #888;
+  display: inline-block;
+  width: 16px;
+  font-size: 14px;
+  text-align: center;
 }

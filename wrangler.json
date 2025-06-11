@@ -11,5 +11,20 @@
   "observability": {
     "enabled": true
   },
-  "upload_source_maps": true
+  "upload_source_maps": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "careemo",
+      "database_id": "17780bf2-77e5-4eea-a9ed-5645087448cf",
+      "preview_database_id": "DB",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "R2_BUCKET",
+      "bucket_name": "careemo"
+    }
+  ]
 }
