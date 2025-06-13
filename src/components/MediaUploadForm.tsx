@@ -3,6 +3,7 @@
 import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import { Site } from '@/types/site';
 import Image from 'next/image';
+import { LinkIcon } from '@heroicons/react/20/solid';
 
 interface ApiResponse {
   success?: boolean;
@@ -22,8 +23,10 @@ export default function MediaUploadForm({ sites, fixedSiteId }: MediaUploadFormP
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
+  const [imgTag, setImgTag] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [siteIdForUpload, setSiteIdForUpload] = useState<string>(fixedSiteId || '');
+  const [imageMetadata, setImageMetadata] = useState<{ width: number; height: number } | null>(null);
 
   useEffect(() => {
     if (fixedSiteId) {
@@ -33,12 +36,39 @@ export default function MediaUploadForm({ sites, fixedSiteId }: MediaUploadFormP
     }
   }, [fixedSiteId]);
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const getImageMetadata = (file: File): Promise<{ width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.onload = () => {
+        resolve({
+          width: img.width,
+          height: img.height,
+        });
+      };
+      img.onerror = () => {
+        reject(new Error('画像のメタデータを取得できませんでした。'));
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
       setError(null);
       setUploadedFileUrl(null);
+      setImageMetadata(null);
+
+      try {
+        // 画像のメタデータを取得
+        const metadata = await getImageMetadata(selectedFile);
+        setImageMetadata(metadata);
+      } catch (err) {
+        console.error('Error getting image metadata:', err);
+        // メタデータの取得に失敗しても処理は続行
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result as string);
@@ -47,6 +77,7 @@ export default function MediaUploadForm({ sites, fixedSiteId }: MediaUploadFormP
     } else {
       setFile(null);
       setPreview(null);
+      setImageMetadata(null);
     }
   };
 
@@ -82,6 +113,14 @@ export default function MediaUploadForm({ sites, fixedSiteId }: MediaUploadFormP
 
       if (data.url) {
         setUploadedFileUrl(data.url);
+        // メタデータがある場合はそれを使用し、ない場合は空文字列を設定
+        const width = imageMetadata?.width || '';
+        const height = imageMetadata?.height || '';
+        setImgTag(
+          `<img src="${data.url}" ${width ? `width="${width}"` : ''} ${height ? `height="${height}"` : ''} alt="${
+            file.name
+          }" />`,
+        );
       } else {
         throw new Error('アップロード成功しましたが、URLが返されませんでした。');
       }
@@ -157,26 +196,45 @@ export default function MediaUploadForm({ sites, fixedSiteId }: MediaUploadFormP
 
       {error && <p className='mt-2 text-sm text-red-600 bg-red-50 p-3 rounded-md'>エラー: {error}</p>}
       {uploadedFileUrl && (
-        <div className='mt-2 text-sm text-green-700 bg-green-50 p-3 rounded-md'>
+        <div className='mt-2 text-sm text-green-700 bg-green-50 p-4 rounded-md'>
           <p className='font-semibold'>アップロード成功！</p>
-          <p className='mt-1'>
-            URL:{' '}
-            <a
-              href={uploadedFileUrl}
-              target='_blank'
-              rel='noopener noreferrer'
-              className='underline hover:text-green-800 break-all'
+          <div className='flex items-center gap-2 mt-2'>
+            <LinkIcon className='w-4 h-4 text-green-600' />
+            <p className='flex-initial'>
+              <a
+                href={uploadedFileUrl}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='underline hover:text-green-800 break-all'
+              >
+                {uploadedFileUrl}
+              </a>
+            </p>
+            <button
+              type='button'
+              onClick={() => navigator.clipboard.writeText(uploadedFileUrl)}
+              className='flex-none px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2'
             >
-              {uploadedFileUrl}
-            </a>
-          </p>
-          <button
-            type='button'
-            onClick={() => navigator.clipboard.writeText(uploadedFileUrl)}
-            className='mt-2 px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2'
-          >
-            URLをコピー
-          </button>
+              URLをコピー
+            </button>
+          </div>
+          {imgTag && (
+            <div className='mt-3'>
+              <input
+                type='text'
+                value={imgTag}
+                readOnly
+                className='w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600'
+              />
+              <button
+                type='button'
+                onClick={() => navigator.clipboard.writeText(imgTag)}
+                className='mt-3 px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2'
+              >
+                IMGタグをコピー
+              </button>
+            </div>
+          )}
         </div>
       )}
 

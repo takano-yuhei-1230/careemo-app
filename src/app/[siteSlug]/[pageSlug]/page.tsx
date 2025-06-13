@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: { siteSlug: string;
 
   return {
     title: `${pageData.title} - ${site.name}`,
-    description: pageData.title,
+    description: pageData.description,
   };
 }
 

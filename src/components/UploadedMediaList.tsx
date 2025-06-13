@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image'; // Next.jsのImageコンポーネントを使用
-import { ClipboardDocumentIcon } from '@heroicons/react/20/solid';
+import { ClipboardDocumentIcon, CodeBracketIcon, LinkIcon } from '@heroicons/react/20/solid';
 
 interface R2File {
   key: string;
@@ -12,14 +12,36 @@ interface R2File {
   eTag?: string;
 }
 
+interface FileWithMetadata extends R2File {
+  width?: number;
+  height?: number;
+}
+
 interface UploadedMediaListProps {
   siteId?: string; // 特定のサイトID、指定されなければ共通フォルダを対象
 }
 
 export default function UploadedMediaList({ siteId }: UploadedMediaListProps) {
-  const [files, setFiles] = useState<R2File[]>([]);
+  const [files, setFiles] = useState<FileWithMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({});
+
+  const getImageMetadata = (url: string): Promise<{ width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.onload = () => {
+        resolve({
+          width: img.width,
+          height: img.height
+        });
+      };
+      img.onerror = () => {
+        reject(new Error('画像のメタデータを取得できませんでした。'));
+      };
+      img.src = url;
+    });
+  };
 
   useEffect(() => {
     async function fetchMedia() {
@@ -45,8 +67,23 @@ export default function UploadedMediaList({ siteId }: UploadedMediaListProps) {
         const data: MediaListApiResponse = await response.json(); // ★ response.json()に型を適用
 
         if (data.success && data.files) {
-          // data.filesの存在もチェック
-          setFiles(data.files);
+          // 各ファイルのメタデータを取得
+          const filesWithMetadata = await Promise.all(
+            data.files.map(async (file) => {
+              try {
+                const metadata = await getImageMetadata(file.url);
+                return {
+                  ...file,
+                  width: metadata.width,
+                  height: metadata.height
+                };
+              } catch (err) {
+                console.error(`Error getting metadata for ${file.url}:`, err);
+                return file;
+              }
+            })
+          );
+          setFiles(filesWithMetadata);
         } else {
           throw new Error(data.error || 'Failed to retrieve files from API.');
         }
@@ -61,6 +98,24 @@ export default function UploadedMediaList({ siteId }: UploadedMediaListProps) {
 
     fetchMedia();
   }, [siteId]); // siteIdが変わったら再フェッチ
+
+  const handleCopy = async (text: string, fileKey: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedStates(prev => ({ ...prev, [fileKey]: true }));
+      setTimeout(() => {
+        setCopiedStates(prev => ({ ...prev, [fileKey]: false }));
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy text:', err);
+    }
+  };
+
+  const generateImgTag = (file: FileWithMetadata) => {
+    const width = file.width ? `width="${file.width}"` : '';
+    const height = file.height ? `height="${file.height}"` : '';
+    return `<img src="${file.url}" ${width} ${height} alt="${file.key.split('/').pop()}" />`;
+  };
 
   if (loading) {
     return (
@@ -99,20 +154,37 @@ export default function UploadedMediaList({ siteId }: UploadedMediaListProps) {
                   loading='lazy'
                 />
               </div>
-              <div className='absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-2 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-xs'>
-                <p className='truncate' title={file.key.substring(file.key.lastIndexOf('/') + 1)}>
-                  {file.key.substring(file.key.lastIndexOf('/') + 1)}
-                </p>
-                {file.size && <p>{(file.size / 1024).toFixed(1)} KB</p>}
+              <div className='absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-2 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
+                <div className='flex flex-col gap-1'>
+                  <p className='truncate text-xs' title={file.key.substring(file.key.lastIndexOf('/') + 1)}>
+                    {file.key.substring(file.key.lastIndexOf('/') + 1)}
+                  </p>
+                  {file.size && <p className='text-xs'>{(file.size / 1024).toFixed(1)} KB</p>}
+                  {(file.width || file.height) && (
+                    <p className='text-xs'>
+                      {file.width} × {file.height}px
+                    </p>
+                  )}
+                  <div className='flex items-center gap-2 mt-1'>
+                    <button
+                      type='button'
+                      onClick={() => handleCopy(file.url, `${file.key}-url`)}
+                      className='flex items-center gap-1 px-2 py-1 text-xs bg-white bg-opacity-20 rounded hover:bg-opacity-30 transition-colors'
+                    >
+                      <LinkIcon className='w-3 h-3' />
+                      {copiedStates[`${file.key}-url`] ? 'Copied!' : 'URL'}
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => handleCopy(generateImgTag(file), `${file.key}-img`)}
+                      className='flex items-center gap-1 px-2 py-1 text-xs bg-white bg-opacity-20 rounded hover:bg-opacity-30 transition-colors'
+                    >
+                      <CodeBracketIcon className='w-3 h-3' />
+                      {copiedStates[`${file.key}-img`] ? 'Copied!' : 'IMG'}
+                    </button>
+                  </div>
+                </div>
               </div>
-              <button
-                type='button'
-                onClick={() => navigator.clipboard.writeText(file.url)}
-                title='画像URLをコピー'
-                className='absolute top-1 right-1 bg-white bg-opacity-75 text-gray-700 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-opacity-100 focus:outline-none'
-              >
-                <ClipboardDocumentIcon className='w-4 h-4' />
-              </button>
             </div>
           ))}
         </div>
