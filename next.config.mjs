@@ -4,6 +4,9 @@ initOpenNextCloudflareForDev();
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID: process.env.GOOGLE_TAG_MANAGER_ID || process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID,
+  },
   images: {
     remotePatterns: [
       {

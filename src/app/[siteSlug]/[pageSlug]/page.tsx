@@ -51,6 +51,26 @@ export default async function Page({ params }: { params: { siteSlug: string; pag
   return (
     <>
       <main dangerouslySetInnerHTML={{ __html: pageData.html_content || '' }} />
+      {siteStatus === 'private' && (
+        <div className='px-4 leading-8 fixed bottom-0 left-0 w-full bg-red-400 text-white z-50 opacity-90'>
+          Site Status: 非公開
+        </div>
+      )}
+      {siteStatus === 'draft' && (
+        <div className='px-4 leading-8 fixed bottom-0 left-0 w-full bg-neutral-400 text-white z-50 opacity-90'>
+          Site Status: 下書き
+        </div>
+      )}
+      {pageStatus === 'private' && (
+        <div className='px-4 leading-8 fixed bottom-0 left-0 w-full bg-red-400 text-white z-50 opacity-90'>
+          Page Status: 非公開
+        </div>
+      )}
+      {pageStatus === 'draft' && (
+        <div className='px-4 leading-8 fixed bottom-0 left-0 w-full bg-neutral-400 text-white z-50 opacity-90'>
+          Page Status: 下書き
+        </div>
+      )}
     </>
   );
 }

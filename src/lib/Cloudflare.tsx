@@ -1,9 +1,9 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import type { D1Database, R2Bucket } from '@cloudflare/workers-types';
 
-export function getD1Database(): D1Database {
+export async function getD1Database(): Promise<D1Database> {
   try {
-    const db = (getCloudflareContext().env as any).DB;
+    const db = (await getCloudflareContext({ async: true })).env.DB;
     return db as D1Database;
   } catch (e) {
     console.error('Error fetching D1Database:', e);
@@ -11,10 +11,11 @@ export function getD1Database(): D1Database {
   }
 }
 
-export function getR2Bucket(): R2Bucket {
+export async function getR2Bucket(): Promise<R2Bucket> {
   try {
     const R2_BINDING_NAME = process.env.R2_BINDING_NAME || 'R2_BUCKET';
-    const R2 = (getCloudflareContext().env as any)[R2_BINDING_NAME] as R2Bucket;
+    const context = await getCloudflareContext({ async: true });
+    const R2 = context.env[R2_BINDING_NAME as keyof typeof context.env] as R2Bucket;
 
     if (!R2) {
       throw new Error(

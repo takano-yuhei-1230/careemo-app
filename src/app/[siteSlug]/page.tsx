@@ -14,6 +14,7 @@ async function getIndexPage(siteSlug: string): Promise<Page | null> {
 export async function generateMetadata({ params }: { params: { siteSlug: string } }): Promise<Metadata> {
   const site = await getSiteBySlug(params.siteSlug);
   const indexPage = await getIndexPage(params.siteSlug);
+
   if (!site) {
     return {
       title: '404 Not Found',
@@ -75,6 +76,16 @@ export default async function SitePage({ params }: { params: { siteSlug: string 
       {siteStatus === 'draft' && (
         <div className='px-4 leading-8 fixed bottom-0 left-0 w-full bg-neutral-400 text-white z-50 opacity-90'>
           Site Status: 下書き
+        </div>
+      )}
+      {indexPageStatus === 'private' && (
+        <div className='px-4 leading-8 fixed bottom-0 left-0 w-full bg-red-400 text-white z-50 opacity-90'>
+          Page Status: 非公開
+        </div>
+      )}
+      {indexPageStatus === 'draft' && (
+        <div className='px-4 leading-8 fixed bottom-0 left-0 w-full bg-neutral-400 text-white z-50 opacity-90'>
+          Page Status: 下書き
         </div>
       )}
     </>

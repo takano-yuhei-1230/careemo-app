@@ -26,5 +26,8 @@
       "binding": "R2_BUCKET",
       "bucket_name": "careemo"
     }
-  ]
+  ],
+  "vars": {
+    "NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID": "GTM-TPC55TR9"
+  }
 }
