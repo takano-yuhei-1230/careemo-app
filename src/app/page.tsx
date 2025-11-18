@@ -1,3 +1,6 @@
+import { getPublishedSites } from '@/services/SiteService';
+import Link from 'next/link';
+
 export const metadata = {
   title: 'Careemo',
   description: 'Careemo',
@@ -5,7 +8,9 @@ export const metadata = {
 
 const googleTagManagerId = process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID || '';
 
-export default function Home() {
+export default async function Home() {
+  const sites = await getPublishedSites();
+
   return (
     <>
       <head>
@@ -40,7 +45,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe>
           </>
         )}
         <main className='flex flex-col items-center justify-center h-screen'>
-          <h1 className='text-4xl font-bold text-neutral-900'>Careemo</h1>
+          <h1 className='text-4xl font-bold text-neutral-900 capitalize'>Careemo</h1>
+          <ul className='site-card-list'>
+            {sites.map((site) => (
+              <li key={site.id} className='site-card'>
+                <Link href={`/${site.slug}`} className='site-card-link text-blue-500'>{site.name}</Link>
+              </li>
+            ))}
+          </ul>
         </main>
       </body>
     </>

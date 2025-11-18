@@ -62,3 +62,25 @@ export async function getSiteBySlug(siteSlug: string): Promise<Site | null> {
     return null;
   }
 }
+
+export async function getPublishedSites(): Promise<Site[]> {
+  try {
+    const DB = await getDB();
+    const stmt = DB.prepare(
+      'SELECT id, name, slug, status, created_at, updated_at FROM Sites WHERE status = ? AND deleted_at IS NULL ORDER BY created_at DESC',
+    );
+    const dbResult = await stmt.bind('published').all();
+    const sites = dbResult.results.map((result: any) => ({
+      id: result.id,
+      name: result.name,
+      slug: result.slug,
+      status: result.status,
+      created_at: result.created_at,
+      updated_at: result.updated_at,
+    }));
+    return sites;
+  } catch (error) {
+    console.error('Error fetching published sites:', error);
+    return [];
+  }
+}

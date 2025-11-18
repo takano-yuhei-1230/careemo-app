@@ -44,3 +44,59 @@ body {
   font-size: 14px;
   text-align: center;
 }
+
+.site-card-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  list-style: none;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 1rem;
+  margin: 2rem 0;
+}
+
+.site-card {
+  width: 100%;
+}
+
+.site-card-link {
+  display: block;
+  padding: 1rem;
+  text-align: center;
+  border: 1px solid #eee;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.site-card-link:hover {
+  background-color: oklch(0.98 0 0)
+}
+
+@media screen and (min-width: 768px) {
+  .site-card {
+    width: calc(50% - 0.5rem);
+  }
+  .site-card-link {
+    padding: 1.5rem;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .site-card-list {
+    padding: 0 1.5rem;
+  }
+  .site-card {
+    width: calc((100% - 2rem) / 3);
+  }
+}
+
+@media screen and (min-width: 1280px) {
+  .site-card-list {
+    padding: 0 2rem;
+  }
+  .site-card {
+    width: calc((100% - 3rem) / 4);
+  }
+}
